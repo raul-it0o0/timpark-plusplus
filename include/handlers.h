@@ -1,8 +1,5 @@
-#ifndef TIMPARK___HANDLERS_H
-#define TIMPARK___HANDLERS_H
-#include <iostream>
-using std::cin;
-
-void handleWrongInputNum(auto& input);
-
-#endif //TIMPARK___HANDLERS_H
+//#pragma once
+//#include "main.h"
+//using namespace stlUtils;
+//
+//int handleError(int errorNum, auto& input);

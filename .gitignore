@@ -9,3 +9,6 @@
 /dataSources/
 /dataSources.local.xml
 /cmake-build-debug
+/build
+/src/test.cpp
+/.vscode/
