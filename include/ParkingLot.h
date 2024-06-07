@@ -3,18 +3,34 @@
 using namespace stlUtils;
 
 class ParkingLot {
-    public:
-        string name; // not sure if these 3 should be made private
+    private:
+        string name;
         unsigned int capacity;
         unsigned int occupation;
-        ParkingLot(string name, int capacity, int occupation);
-        void modifyCapacity();
+        float costPerDay;
+        
+        double totalEarnings; // reset every 14 days
+        double earningsOfDay;
+        unsigned int incomingCarsOfDay;
+        unsigned int outgoingCarsOfDay;
+//        NO PAYING ON LAST DAY OF PARKING!
+
+    public:
+        ParkingLot(const string& name,
+                   const int& capacity,
+                   const int& occupation,
+                   const float& costPerDay);
+        string getName();
+
+        void modifyCapacity(int newCapacity);
         void addCar();
         void removeCar();
         void modifyFees();
 
-    private:
-        unsigned long int earnings;
-        unsigned long int earningSum; // reset every 14 days
-        float costPerDay;
+        double getTodayEarnings();
+        double getTotalEarnings();
+
+        void printDailyReport();
+        void addEarnings();
+        void resetDailyStats();
 };

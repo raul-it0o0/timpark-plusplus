@@ -1,5 +1,6 @@
 #pragma once
 #include "main.h"
+#include "Administrator.h"
 #include <fstream>
 using namespace stlUtils;
 

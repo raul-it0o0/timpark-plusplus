@@ -2,7 +2,11 @@
 #include <iostream>
 #include <array>
 #include <vector>
+#include <filesystem>
+#include <string>
 #include <stdlib.h>
+
+extern unsigned int DayCounter;
 
 namespace stlUtils {
     using std::cin;
@@ -19,4 +23,6 @@ namespace stlUtils {
     using std::flush;
     using std::fstream;
     using std::ifstream;
+    using std::stoi;
+    using std::stof;
 }

@@ -29,6 +29,8 @@ bool adminCorrectPassword(const string& adminAlias, const string& adminPassword)
         getline(fin, temp); // change line
     }
 
+    fin.close();
+
     return false;
 
 }

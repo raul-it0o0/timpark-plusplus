@@ -23,4 +23,6 @@ add_executable(
         src/ParkingLot.cpp
         include/ParkingLot.h
         src/inputs.cpp
+        src/print.cpp
+        include/print.h
 )
