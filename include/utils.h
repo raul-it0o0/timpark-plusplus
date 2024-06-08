@@ -11,3 +11,5 @@ string encrypt(string& message, const string& key);
 string decrypt(string& encrypted, const string& key);
 
 bool adminCorrectPassword(const string& adminAlias, const string& adminPassword);
+
+bool aliasTaken(const string& alias);

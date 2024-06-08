@@ -13,14 +13,15 @@ int mainMenu() {
     cout << "[3] EXIT\n";
     cout << endl;
 
-    int option;
-    cin >> option;
-//  not sure about the condition for the exception if this is implemented using unsigned char.
+    string input;
+    cin >> input;
 
-    while((option != 1) && (option != 2) && (option != 3))  {
+    while((input != "1") && (input != "2") && (input != "3"))  {
         cout << "Please choose a valid option [1-3]. ";
-        cin >> option;
+        cin >> input;
     }
+
+    int option = stoi(input);
 
     return option;
 
@@ -31,40 +32,39 @@ int adminAuthMenu(string& adminAlias, string& adminPassword) {
     bool retryInput = false;
 
     do {
+
+        cout << flush;
+        system("CLS");
     
-    cout << "Enter admin alias: ";
+        cout << "Enter admin alias: ";
+        cin >> adminAlias;
 
-    cin >> adminAlias;
+        cout << "Enter admin password: ";
+        cin >> adminPassword;
 
-    cout << "Enter admin password: ";
+        if(!adminCorrectPassword(adminAlias, adminPassword)) {
+            cout << "Wrong alias or password! Choose an option [1-4]:\n";
+            cout << "[1] TRY AGAIN\n";
+            cout << "[2] NEW ADMIN\n";
+            cout << "[3] BACK TO MAIN MENU\n";
+            cout << "[4] EXIT\n";
+            cout << endl;
 
-    cin >> adminPassword;
-
-    if(!adminCorrectPassword(adminAlias, adminPassword)) {
-        cout << "Wrong alias or password! Choose an option [1-4]:\n";
-        cout << "[1] TRY AGAIN\n";
-        cout << "[2] NEW ADMIN\n";
-        cout << "[3] BACK TO MAIN MENU\n";
-        cout << "[4] EXIT\n";
-        cout << endl;
-
-        switch(getMenuInput()) {
-            case 1:
-                retryInput = true;
-                break;
-            case 2:
-                // new admin request, append to csv file
-                return 1; 
-            case 3:
-                return -1;
-            case 4:
-                return -2;
+            switch (getMenuInput()) {
+                case 1:
+                    break;
+                case 2:
+                    // new admin request, append to csv file
+                    return 1;
+                case 3:
+                    return -1;
+                case 4:
+                    return -2;
+            }
         }
-    }
-
     }while(retryInput);
 
-    // admin logged in successfully
+    // Admin logged in successfully
     return 0; 
     
 }
@@ -75,44 +75,49 @@ int getNewAdminCredentials(string& alias, string& password) {
     bool passwordValidated = false;
 
     cout << "Enter admin alias: ";
-
-//     while(aliasTaken())
-
     cin >> alias;
+
+    while (aliasTaken(alias)) {
+        cout << "This admin alias is taken\n";
+        cout << "Enter another alias: ";
+        cin >> alias;
+    }
+
+    cout << "Enter admin password: ";
+    cin >> password;
 
     do {
 
-        cout << "Enter admin password: ";
-
-        cin >> password;
-
         cout << "Confirm password (retype): ";
-
         cin >> temp;
 
-        // maybe add option to go back to main menu
-
-        if (password == temp)
+        if (password != temp) {
+            cout << "The two passwords must match. Try again\n";
+            passwordValidated = false;
+        }
+        else
             passwordValidated = true;
 
     } while(!passwordValidated);
 
     return 0;
-
 }
 
 int adminPanel(const string& alias, const string& password) {
 
-    Administrator sessionAdmin(alias, password);
-    string temp; // not useful for anything, only used for cin
-    bool reprintMenu = true;
+    Administrator sessionAdmin{alias, password};
+
+    // used purely for "type any character to continue"
+    string temp;
     bool validatedInput = true;
 
     do {
         cout<<flush;
         system("CLS");
 
-        cout << "Logged in as: " << alias << endl;
+        cout << "DAY " << DayCounter << endl;
+        cout << "Logged in as: " << alias << endl << endl;
+
         cout << "Choose an option below [1-6]: \n\n";
 
         cout << "[1] MANAGE PARKING LOT(S)\n";
@@ -131,36 +136,32 @@ int adminPanel(const string& alias, const string& password) {
             switch(option) {
                 case 1:
                     if(sessionAdmin.ownedParkingLots.empty()) {
+                        cout<<flush;
+                        system("CLS");
                         cout << "You have no parking lots to manage.\n";
                         cout << "Type any character to continue. ";
                         cin >> temp;
-                        reprintMenu = true;
                     }
-                    else {
+                    else
                         parkingLotPanel(sessionAdmin);
-                        reprintMenu = true;
-                    }
                     break;
 
                 case 2:
                     sessionAdmin.nextDay();
                     cout << "Type any character to continue. ";
                     cin >> temp;
-                    reprintMenu = true;
                     break;
 
                 case 3:
                     sessionAdmin.addNewParkingLotPanel();
                     cout << "Type any character to continue. ";
                     cin >> temp;
-                    reprintMenu = true;
                     break;
 
                 case 4:
                     sessionAdmin.changePassword();
                     cout << "Type any character to continue. ";
                     cin >> temp;
-                    reprintMenu = true;
                     break;
 
                 case 5:
@@ -175,8 +176,9 @@ int adminPanel(const string& alias, const string& password) {
                     cin >> option;
                     break;
             }
-        }while(!validatedInput);
-    }while(reprintMenu);
+        } while(!validatedInput);
+
+    } while(true);
 
     return 0;
 
@@ -184,11 +186,11 @@ int adminPanel(const string& alias, const string& password) {
 
 void parkingLotPanel(Administrator& sessionAdmin) {
 
-    bool reprintMenu = false;
-
     do {
         cout << flush;
         system("CLS");
+
+        cout << "DAY " << DayCounter << endl << endl;
 
         cout << "Choose an option below [1-" << sessionAdmin.ownedParkingLots.size() + 2 << "]: \n\n";
 
@@ -206,7 +208,6 @@ void parkingLotPanel(Administrator& sessionAdmin) {
         do {
             if (option == sessionAdmin.ownedParkingLots.size() + 1) {
                 sessionAdmin.addNewParkingLotPanel();
-                reprintMenu = true;
             }
 
             else if (option == sessionAdmin.ownedParkingLots.size() + 2)
@@ -214,19 +215,17 @@ void parkingLotPanel(Administrator& sessionAdmin) {
 
             else if ((1 <= option) && (option <= sessionAdmin.ownedParkingLots.size())) {
                 sessionAdmin.manageParkingLotMenu(sessionAdmin.ownedParkingLots[option - 1]);
-                reprintMenu = true;
             }
 
             else {
                 validatedInput = false;
-                cout << "Please choose a valid option [1-" << sessionAdmin.ownedParkingLots.size() + 3
+                cout << "Please choose a valid option [1-" << sessionAdmin.ownedParkingLots.size() + 2
                      << "]. ";
                 cin >> input;
                 option = stoi(input);
             }
         } while(!validatedInput);
-    } while(reprintMenu);
 
-
+    } while(true);
 
 }

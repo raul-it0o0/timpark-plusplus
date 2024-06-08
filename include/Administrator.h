@@ -1,11 +1,12 @@
 #pragma once
 #include "main.h"
-#include "ParkingLot.h"
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include "ParkingLot.h"
 using namespace stlUtils;
 
+class ParkingLot;
 
 class Administrator {
     private:
@@ -17,12 +18,14 @@ class Administrator {
     public:
         vector<ParkingLot> ownedParkingLots;
         Administrator(const string& alias, const string& password);
+        string getAlias() const;
         void changePassword();
         void manageParkingLotMenu(ParkingLot& parkingLot);
         void addParkingLot(const string& name,
                            const int& capacity,
                            const int& occupation,
-                           const float&costPerDay);
+                           const float&costPerDay,
+                           bool fromDB);
         void deleteParkingLot(ParkingLot& parkingLotToDelete);
         void nextDay();
 
@@ -33,6 +36,4 @@ class Administrator {
         void resetDailyStats();
 
         void addNewParkingLotPanel();
-        void manageParkingLotMenu();
-
 };

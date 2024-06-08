@@ -24,17 +24,23 @@ Administrator::Administrator(const string& alias, const string& password) {
     string adminFilePath = currentPath.generic_string() + "/" + adminFileName;
 
     if (newAdmin) {
-        ofstream fout(adminFilePath);
+
         // create data file
+        ofstream fout(adminFilePath);
 
         // write header row
         fout << "ParkingLotName,Capacity,Occupation,CostPerDay" << endl;
-
         fout.close();
+
+        // append admin credentials on logins.csv
+        fout.open("../../data/auth/logins.csv", std::ios::out | std::ios::app);
+        fout << alias << "," << password << endl;
+        fout.close();
+
     }
 
     else {
-        // parse data file and create parking lot objects
+        // parse data file and create parking lot objects (if any)
         ifstream fin(adminFilePath);
 
         string temp, name;
@@ -44,10 +50,8 @@ Administrator::Administrator(const string& alias, const string& password) {
 
         // ignore header row
         getline(fin, temp);
-        getline(fin, temp);
 
-        while(!fin.eof()) {
-            getline(fin, temp, ',');
+        while(getline(fin, temp, ',')) {
             name = temp;
 
             getline(fin, temp, ',');
@@ -60,8 +64,9 @@ Administrator::Administrator(const string& alias, const string& password) {
             getline(fin, temp);
             costPerDay = stof(temp);
 
-            this->addParkingLot(name, capacity, occupation, costPerDay);
-            // create object and pushback
+            // create object and push_back in vector
+            this->addParkingLot(name, capacity, occupation, costPerDay, true);
+
         }
 
         fin.close();
@@ -73,12 +78,21 @@ Administrator::Administrator(const string& alias, const string& password) {
 void Administrator::addParkingLot(const string &name,
                                   const int &capacity,
                                   const int &occupation,
-                                  const float &costPerDay) {
+                                  const float &costPerDay,
+                                  bool fromDB) {
 
     ParkingLot newParkingLot{name, capacity, occupation, costPerDay};
     this->ownedParkingLots.push_back(newParkingLot);
 
-    // File update
+    if (!fromDB) {
+        // append new parking lot data to admin data file
+        string adminFilePath{"../../data/admins/" + this->alias + ".csv"};
+        ofstream fout(adminFilePath, std::ios::out | std::ios::app);
+
+        fout << name << "," << capacity << "," << occupation << "," << costPerDay << endl;
+
+        fout.close();
+    }
 
 }
 
@@ -130,9 +144,61 @@ void Administrator::deleteParkingLot(ParkingLot& parkingLotToDelete) {
     // erase (remove) parking lot object from vector
     this->ownedParkingLots.erase(this->ownedParkingLots.begin()+i);
 
-    cout << "Deleted parking lot.\n";
+    // File update
+    // store all entries in adminSession data file, except for (this) parking lot
+    string adminFilePath{"../../data/admins/" + this->getAlias() + ".csv"}, temp;
+    ifstream fin(adminFilePath);
 
-    // File update (using i?)
+    // get header row
+    string headerRow;
+    getline(fin, headerRow);
+
+    vector<string> names;
+    vector<int> occupations, capacities;
+    vector<float> costs;
+
+    while(getline(fin, temp,',')) {
+        if (temp != parkingLotToDelete.getName()) {
+            names.push_back(temp);
+            getline(fin, temp, ',');
+            capacities.push_back(std::stoi(temp));
+            getline(fin, temp, ',');
+            occupations.push_back(std::stoi(temp));
+            getline(fin, temp);
+            costs.push_back(stof(temp));
+        }
+        else
+            getline(fin, temp);
+        // ignore entry of (this) parking lot in csv
+    }
+
+    fin.close();
+
+    // overwrite the file
+    ofstream fout(adminFilePath);
+
+    // write header row
+    fout << headerRow << endl;
+
+    // write every entry except sessionAdmin entry
+    auto namesIter = names.begin();
+    auto capIter = capacities.begin();
+    auto occIter = occupations.begin();
+    auto costsIter = costs.begin();
+
+    while(namesIter != names.end()) {
+        fout << *namesIter << "," << *capIter << "," << *occIter << "," << *costsIter << endl;
+        namesIter++;
+        capIter++;
+        occIter++;
+        costsIter++;
+    }
+
+    // this time we don't append the parking lot we omitted, since we want to delete it from our database
+
+    fout.close();
+
+    cout << "Deleted parking lot.\n\n";
 }
 
 void Administrator::printGeneralStats() {
@@ -224,7 +290,7 @@ void Administrator::addNewParkingLotPanel() {
         cin >> costPerDay;
     }
 
-    this->addParkingLot(name, capacity, occupation, costPerDay);
+    this->addParkingLot(name, capacity, occupation, costPerDay, false);
 
     cout << "Added parking lot.\n";
 
@@ -240,21 +306,26 @@ bool Administrator::nameTaken(const string &name) {
 
 void Administrator::manageParkingLotMenu(ParkingLot &parkingLot) {
 
-    bool reprintMenu = false;
-
     do {
         cout << flush;
         system("CLS");
 
+        cout << "DAY " << DayCounter << endl << endl;
+
+        cout << "[_____ PARKING LOT: " << parkingLot.getName() << " _____] ";
+        cout << " [__ " << ((float)parkingLot.getOccupation() / parkingLot.getCapacity())*100;
+        cout << "% OCCUPIED __]" << endl;
+
         cout << "Parking lot: " << parkingLot.getName() << endl << endl;
-        cout << "Choose an option below [1-5]:\n\n";
+        cout << "Choose an option below [1-6]:\n\n";
 
         cout << "[1] ADD CAR\n";
         cout << "[2] REMOVE CAR\n";
-        cout << "[3] CHANGE PARKING COST\n\n";
+        cout << "[3] CHANGE PARKING COST\n";
+        cout << "[4] MODIFY CAPACITY\n\n";
 
-        cout << "[4] DELETE THIS PARKING LOT\n";
-        cout << "[5] BACK TO MAIN MENU\n\n";
+        cout << "[5] DELETE THIS PARKING LOT\n";
+        cout << "[6] BACK TO MAIN MENU\n\n";
 
         string input;
         cin >> input;
@@ -264,43 +335,47 @@ void Administrator::manageParkingLotMenu(ParkingLot &parkingLot) {
         do {
             switch (option) {
                 case 1:
-                    parkingLot.addCar();
-                    cout << " Type any character to continue. ";
+                    parkingLot.addCar(*this);
+                    cout << "Type any character to continue. ";
                     cin >> input;
-                    reprintMenu = true;
                     break;
                 case 2:
-                    parkingLot.removeCar();
-                    cout << " Type any character to continue. ";
+                    parkingLot.removeCar(*this);
+                    cout << "Type any character to continue. ";
                     cin >> input;
-                    reprintMenu = true;
                     break;
                 case 3:
-                    parkingLot.modifyFees();
-                    cout << " Type any character to continue. ";
+                    parkingLot.modifyFees(*this);
+                    cout << "Type any character to continue. ";
                     cin >> input;
-                    reprintMenu = true;
                     break;
                 case 4:
+                    parkingLot.modifyCapacity(*this);
+                    cout << "Type any character to continue. ";
+                    cin >> input;
+                    break;
+                case 5:
                     this->deleteParkingLot(parkingLot);
-                    cout << " Type any character to continue. ";
+                    cout << "Type any character to continue. ";
                     cin >> input;
                     return;
-                case 5:
+                case 6:
                     return;
                 default:
                     validatedInput = false;
-                    cout << "Please choose a valid option [1-5]. ";
+                    cout << "Please choose a valid option [1-6]. ";
                     cin >> input;
                     option = stoi(input);
                     break;
             }
         }while(!validatedInput);
-    }while(reprintMenu);
+
+    }while(true);
 
 }
 
 void Administrator::changePassword() {
+
     cout << flush;
     system("CLS");
 
@@ -309,15 +384,13 @@ void Administrator::changePassword() {
 
     do {
 
-        cout << "Enter admin password: ";
+        cout << "Enter new admin password: ";
 
         cin >> newPassword;
 
-        cout << "Confirm password (retype): ";
+        cout << "Confirm new password (retype): ";
 
         cin >> temp;
-
-        // maybe add option to go back to main menu
 
         if (newPassword != temp) {
             cout << "The two passwords must match. Try again\n";
@@ -328,7 +401,55 @@ void Administrator::changePassword() {
 
     } while(!passwordValidated);
 
-    cout << "Password changed.\n";
+    // File update
+    ifstream fin("../../data/auth/logins.csv");
 
+    // get header row
+    string headerRow;
+    getline(fin, headerRow);
+
+    vector<string> aliases, passwords;
+
+    // store all
+    while(getline(fin, temp,',')) {
+        if (temp != this->alias) {
+            aliases.push_back(temp);
+            getline(fin, temp);
+            passwords.push_back(temp);
+        }
+        else
+            getline(fin, temp);
+            // ignore entry of sessionAdmin in csv
+    }
+
+    fin.close();
+
+    // overwrite the file
+    ofstream fout("../../data/auth/logins.csv");
+
+    // write header row
+    fout << headerRow << endl;
+
+    // write every entry except sessionAdmin entry
+    auto aliasIter = aliases.begin();
+    auto passIter = passwords.begin();
+
+    while(aliasIter != aliases.end()) {
+        fout << *aliasIter << "," << *passIter << endl;
+        aliasIter++;
+        passIter++;
+    }
+
+    // now append the sessionAdmin entry along with the new password
+    fout << this->alias << "," << newPassword << endl;
+
+    fout.close();
+
+    cout << "Password changed.\n\n";
+
+}
+
+string Administrator::getAlias() const {
+    return this->alias;
 }
 

@@ -34,3 +34,28 @@ bool adminCorrectPassword(const string& adminAlias, const string& adminPassword)
     return false;
 
 }
+
+bool aliasTaken(const string& alias) {
+
+    string temp;
+    fstream fin;
+    // note: this is the path to the data file, relative to THE EXECUTABLE
+    fin.open("../../data/auth/logins.csv");
+
+    if(!fin.is_open()) {
+        cout << "FileNotOpenError";
+        return false;
+    }
+
+    // ignore header row on logins.csv
+    getline(fin, temp);
+
+    while(getline(fin, temp, ',')) {
+        if (temp == alias)
+            return true;
+        getline(fin, temp);
+    }
+
+    return false;
+
+}
