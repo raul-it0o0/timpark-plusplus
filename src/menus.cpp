@@ -1,5 +1,7 @@
 #include "../include/menus.h"
 #include "../include/print.h"
+#include "utils.h"
+
 using namespace stlUtils;
 
 int mainMenu() {

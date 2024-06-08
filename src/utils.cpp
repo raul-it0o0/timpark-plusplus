@@ -1,4 +1,7 @@
+#include "../include/inputs.h"
 #include "../include/utils.h"
+
+
 using namespace stlUtils;
 
 bool adminCorrectPassword(const string& adminAlias, const string& adminPassword) {
@@ -58,4 +61,17 @@ bool aliasTaken(const string& alias) {
 
     return false;
 
+}
+
+int getMenuInput() {
+    int option;
+
+    cin >> option;
+
+    while ((option != 1) && (option != 2) && (option != 3) && (option != 4)) {
+        cout << "Please choose a valid option [1-4]. ";
+        cin >> option;
+    }
+
+    return option;
 }
