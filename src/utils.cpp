@@ -1,6 +1,4 @@
-#include "../include/inputs.h"
 #include "../include/utils.h"
-
 
 using namespace stlUtils;
 

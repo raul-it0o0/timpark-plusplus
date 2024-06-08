@@ -1,7 +1,6 @@
 #pragma once
 #include "../include/main.h"
 #include "../include/utils.h"
-#include "inputs.h"
 #include "Administrator.h"
 
 int mainMenu();
